@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BCI Prediction</title>
+</head>
+<body>
+  <h1>Upload .mat File for BCI Prediction</h1>
+  <form id="uploadForm">
+    <input type="file" id="fileInput" name="file" accept=".mat" required />
+    <button type="submit">Upload & Predict</button>
+  </form>
+
+  <h2>Prediction Results:</h2>
+  <pre id="output">Waiting for prediction...</pre>
+
+  <script>
+    // Add event listener to the form submission
+    document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select a file.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        // Make the POST request to the Flask backend for prediction
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        // Check if the response status is okay (200)
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        // Parse the response as JSON
+        const result = await response.json();
+        const outputElement = document.getElementById('output');
+
+        if (result.success) {
+          // Display predictions if success
+          outputElement.textContent = result.predictions.join('\n');
+        } else {
+          // Display error if there's any issue with the predictions
+          outputElement.textContent = `❌ Error: ${result.error || 'Unknown error'}`;
+        }
+
+      } catch (err) {
+        // Handle any fetch or other errors
+        console.error('Error occurred:', err);
+        document.getElementById('output').textContent = "🔥 Fetch error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
